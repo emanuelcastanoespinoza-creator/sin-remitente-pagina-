@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#fff0f7">
+<title>Sin remitente</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#fff0f7; --fg:#4a0d2e; --dim:#a45a82; --acc:#e11d8c; --line:#f5c4de; --card:#ffffff; }
+  * { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+  html,body { background:var(--bg); color:var(--fg); }
+  body { font-family:'Inter','Segoe UI',system-ui,sans-serif; min-height:100dvh; overflow-x:hidden; padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom); }
+  .mono { font-family:'JetBrains Mono','Consolas','Courier New',monospace; }
+
+  .orb { position:fixed; border-radius:50%; filter:blur(90px); opacity:.5; pointer-events:none; z-index:0; }
+  .orb.a { width:380px; height:380px; background:#ff7ac1; top:-120px; right:-140px; animation:flota 16s ease-in-out infinite alternate; }
+  .orb.b { width:320px; height:320px; background:#c77dff; bottom:-120px; left:-120px; animation:flota 20s ease-in-out infinite alternate-reverse; }
+  @keyframes flota { to { transform:translate(-40px,50px) scale(1.15); } }
+  body::after { content:""; position:fixed; inset:0; pointer-events:none; z-index:60; opacity:.05;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"); }
+
+  .vista { position:relative; z-index:1; display:none; min-height:100dvh; max-width:560px; margin:0 auto; padding:34px 22px 56px; flex-direction:column; gap:22px; animation:in .6s ease both; }
+  .vista.activa { display:flex; }
+  @keyframes in { from{opacity:0; transform:translateY(14px)} to{opacity:1; transform:none} }
+
+  .tag { font-size:.68rem; letter-spacing:.28em; color:var(--acc); text-transform:uppercase; }
+  h1 { background:linear-gradient(90deg,#e11d8c,#ff5fb0 50%,#b04bd6); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; font-family:'Fraunces',Georgia,serif; font-weight:600; font-size:clamp(2.5rem,12vw,3.8rem); line-height:1.02; letter-spacing:-.03em; }
+  h2 { font-family:'Fraunces',Georgia,serif; font-weight:600; font-size:clamp(1.8rem,8vw,2.4rem); line-height:1.1; letter-spacing:-.02em; }
+  p { color:#7a2552; line-height:1.7; }
+  .dim { color:var(--dim); font-size:.88rem; }
+  .intro { font-family:'Fraunces',Georgia,serif; font-size:clamp(1.12rem,4.6vw,1.32rem); line-height:1.75; color:#5e1a40; letter-spacing:-.005em; }
+  .intro::first-line { color:var(--acc); }
+  .volver { background:none; border:none; color:var(--dim); font:inherit; font-size:.85rem; cursor:pointer; align-self:flex-start; padding:4px 0; }
+
+  button.btn { font:inherit; font-weight:600; cursor:pointer; color:#fff; background:linear-gradient(135deg,#ff4fa8,#e11d8c); box-shadow:0 6px 20px rgba(225,29,140,.35); border:none; padding:15px 26px; border-radius:99px; transition:transform .15s, opacity .2s; align-self:flex-start; }
+  button.btn:active { transform:scale(.96); }
+  button.btn.ghost { background:transparent; color:var(--fg); border:1px solid #f08cc0; box-shadow:none; }
+  button.btn[disabled] { opacity:.35; pointer-events:none; }
+  .oculto { display:none !important; }
+
+  /* ÍNDICE */
+  .meta { display:flex; justify-content:space-between; font-size:.7rem; color:var(--dim); letter-spacing:.18em; text-transform:uppercase; }
+  .indice { display:flex; flex-direction:column; border-top:1px solid var(--line); margin-top:6px; }
+  .cap { display:flex; align-items:center; gap:16px; padding:20px 2px; border:none; border-bottom:1px solid var(--line); cursor:pointer; background:none; color:inherit; font:inherit; text-align:left; width:100%; transition:padding .25s, opacity .3s; }
+  .cap:hover { padding-left:8px; } .cap:active { opacity:.7; }
+  .cap .n { font-size:.78rem; color:var(--acc); width:28px; }
+  .cap .t { flex:1; } .cap .t b { display:block; font-family:'Fraunces',Georgia,serif; font-weight:600; font-size:1.3rem; letter-spacing:-.01em; margin-bottom:2px; }
+  .cap .t span { color:var(--dim); font-size:.84rem; }
+  .cap .ok { width:22px; height:22px; border-radius:50%; border:1px solid #e8b0d0; display:grid; place-items:center; font-size:.66rem; color:transparent; transition:all .3s; }
+  .cap.visto .ok { background:var(--acc); border-color:var(--acc); color:#fff; }
+  .cap.bloq { opacity:.55; } .cap.bloq .ok { color:var(--dim); font-size:.8rem; }
+  .cap.nuevo { animation:late 1.8s ease 2; } @keyframes late { 50% { background:#ffe0f0; } }
+
+  /* CAP 1 scroll */
+  .beat { min-height:56vh; display:flex; align-items:center; font-family:'Fraunces',Georgia,serif; font-size:clamp(1.55rem,6.4vw,2.1rem); line-height:1.28; letter-spacing:-.01em; opacity:0; transform:translateY(26px); transition:opacity .9s ease, transform .9s ease; }
+  .beat.in { opacity:1; transform:none; } .beat.fin { color:var(--acc); font-style:italic; }
+
+  /* CAP 2 espejo */
+  .espejo-wrap { display:flex; flex-direction:column; align-items:center; gap:22px; }
+  .espejo { position:relative; width:190px; height:250px; border-radius:50% / 40%; cursor:pointer; overflow:hidden; border:2px solid #ff7ac1;
+            background:linear-gradient(150deg,#ffd0e8,#ffa6d3 70%); box-shadow:0 0 0 7px #ffe0f0, 0 0 60px rgba(225,29,140,.35), inset 0 0 40px rgba(255,255,255,.45); display:grid; place-items:center; transition:transform .2s; }
+  .espejo:active { transform:scale(.97); }
+  .espejo .brillo { position:absolute; inset:-30%; background:linear-gradient(115deg,transparent 40%,rgba(255,255,255,.14) 50%,transparent 60%); animation:barrido 4.5s ease-in-out infinite; }
+  @keyframes barrido { 0%{transform:translateX(-80%)} 60%,100%{transform:translateX(80%)} }
+  .espejo span { position:relative; font-size:.74rem; letter-spacing:.22em; color:var(--dim); text-transform:uppercase; text-align:center; padding:0 20px; line-height:1.8; }
+  .elogio { min-height:120px; text-align:center; font-family:'Fraunces',Georgia,serif; font-size:clamp(1.25rem,5.2vw,1.6rem); line-height:1.4; color:var(--fg); transition:opacity .5s ease, transform .5s ease; }
+  .elogio.sale { opacity:0; transform:translateY(10px); }
+  .elogio em { color:var(--acc); font-style:italic; }
+  .cont { font-size:.75rem; color:var(--dim); letter-spacing:.2em; text-align:center; }
+  .espejo video { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; transform:scaleX(-1); opacity:0; transition:opacity .8s ease; }
+  .espejo.cam { width:min(76vw,300px); height:min(98vw,390px); }
+  .espejo.cam video { opacity:1; } .espejo.cam span { display:none; }
+  .espejo { transition:width .6s ease, height .6s ease, transform .2s; }
+  .espejo.cam .brillo { opacity:.7; }
+
+  /* CAP 3 reloj */
+  .reloj-wrap { display:flex; flex-direction:column; align-items:center; gap:22px; }
+  .reloj { width:min(70vw,260px); height:min(70vw,260px); }
+  .reloj .aro { fill:#fff; stroke:#ff7ac1; stroke-width:2; }
+  .reloj .marca { stroke:#f08cc0; stroke-width:2; stroke-linecap:round; }
+  .reloj .mano-l { stroke:var(--acc); stroke-width:3; stroke-linecap:round; }
+  .reloj .mano-c { stroke:#7a2552; stroke-width:4; stroke-linecap:round; }
+  .reloj .eje { fill:var(--acc); }
+  .reloj .g { transform-origin:100px 100px; }
+  .etapa { font-size:.74rem; letter-spacing:.2em; color:var(--dim); text-transform:uppercase; text-align:center; min-height:1.2em; transition:opacity .3s; }
+  .frase { min-height:110px; text-align:center; font-family:'Fraunces',Georgia,serif; font-size:clamp(1.2rem,5vw,1.55rem); line-height:1.45; color:var(--fg); transition:opacity .4s ease, transform .4s ease; }
+  .frase.sale { opacity:0; transform:translateY(8px); }
+  .frase em { color:var(--acc); font-style:italic; }
+  input[type=range].tiempo { -webkit-appearance:none; appearance:none; width:min(86vw,360px); height:36px; background:transparent; touch-action:none; cursor:grab; }
+  input[type=range].tiempo::-webkit-slider-runnable-track { height:3px; background:linear-gradient(90deg,var(--acc),#f5c4de); border-radius:3px; }
+  input[type=range].tiempo::-moz-range-track { height:3px; background:linear-gradient(90deg,var(--acc),#f5c4de); border-radius:3px; }
+  input[type=range].tiempo::-webkit-slider-thumb { -webkit-appearance:none; width:26px; height:26px; border-radius:50%; background:var(--acc); border:none; margin-top:-11px; box-shadow:0 0 0 6px rgba(225,29,140,.18); }
+  input[type=range].tiempo::-moz-range-thumb { width:26px; height:26px; border-radius:50%; background:var(--acc); border:none; box-shadow:0 0 0 6px rgba(225,29,140,.18); }
+  .contador { font-family:'Fraunces',Georgia,serif; font-size:clamp(2.6rem,12vw,3.6rem); font-weight:600; color:var(--acc); letter-spacing:-.02em; text-align:center; min-height:1.2em; }
+  .nota { color:var(--dim); font-size:.8rem; line-height:1.5; }
+
+  /* CAP 4 mantener presionado */
+  .holds { display:flex; flex-direction:column; gap:12px; }
+  .hold { position:relative; overflow:hidden; background:var(--card); border:1px solid var(--line); border-radius:18px; padding:22px 20px 26px; cursor:pointer; -webkit-user-select:none; user-select:none; -webkit-touch-callout:none; touch-action:pan-y; }
+  .hold .tx { font-family:'Fraunces',Georgia,serif; font-size:1.18rem; line-height:1.45; filter:blur(9px); transition:filter .8s ease; }
+  .hold .lbl { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:.7rem; letter-spacing:.22em; color:var(--acc); text-transform:uppercase; transition:opacity .4s; pointer-events:none; }
+  .hold .bar { position:absolute; left:0; bottom:0; height:3px; width:0; background:var(--acc); }
+  .hold.abierto { border-color:#f08cc0; background:linear-gradient(165deg,#fff5fa,#ffe3f1); } .hold.abierto .tx { filter:none; } .hold.abierto .lbl { opacity:0; } .hold.abierto .bar { width:100% !important; opacity:0; transition:opacity .6s; }
+
+  /* CAP 5 sobres */
+  .sobres { display:flex; flex-direction:column; gap:12px; }
+  .sobre { background:var(--card); border:1px solid var(--line); border-radius:18px; overflow:hidden; transition:border-color .3s; }
+  .sobre.ab { border-color:#f08cc0; }
+  .sobre > button { width:100%; background:none; border:none; color:var(--fg); font:inherit; display:flex; align-items:center; gap:14px; padding:20px 18px; cursor:pointer; text-align:left; }
+  .sobre .ic { font-size:1.3rem; } .sobre .tt { flex:1; font-family:'Fraunces',Georgia,serif; font-size:1.15rem; line-height:1.3; }
+  .sobre .cuerpo { max-height:0; overflow:hidden; transition:max-height .5s ease; padding:0 18px; }
+  .sobre.ab .cuerpo { max-height:260px; padding:0 18px 20px; } .sobre .cuerpo p { margin-bottom:14px; }
+  .cierre { margin-top:10px; padding-top:26px; border-top:1px solid var(--line); display:flex; flex-direction:column; gap:14px; }
+
+  /* ENTRADA: oscuridad y luz */
+  #entrada { position:fixed; inset:0; z-index:70; background:linear-gradient(165deg,#ff9bd2,#e11d8c 55%,#8e1b94); overflow:hidden; touch-action:none; cursor:pointer; transition:transform 1.5s cubic-bezier(.7,0,.2,1), opacity 1.5s ease; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:26px; }
+  #entrada::before { content:""; position:absolute; inset:0; pointer-events:none; background:radial-gradient(circle var(--r,150px) at var(--x,50%) var(--y,60%), rgba(255,255,255,.55), rgba(255,255,255,.12) 55%, transparent 100%); }
+  #entrada.abre { transform:scale(1.35); opacity:0; pointer-events:none; }
+  #entrada.fuera { display:none; }
+  #luz { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
+  #entNombre { background:none; -webkit-text-fill-color:#fff; position:relative; font-family:'Fraunces',Georgia,serif; font-weight:600; font-size:clamp(2.6rem,15vw,5.2rem); letter-spacing:-.03em; display:flex; justify-content:center; animation:respira 3.2s ease-in-out infinite; }
+  #entNombre span { display:inline-block; color:#fff; -webkit-text-fill-color:#fff; }
+  @keyframes respira { 0%,100% { text-shadow:0 0 22px rgba(255,255,255,.45), 0 0 60px rgba(255,255,255,.25); } 50% { text-shadow:0 0 34px rgba(255,255,255,.85), 0 0 90px rgba(255,255,255,.45); } }
+  #entHint { position:absolute; bottom:calc(9vh + env(safe-area-inset-bottom)); left:0; right:0; text-align:center; font-size:.7rem; letter-spacing:.24em; text-transform:uppercase; color:rgba(255,255,255,.88); transition:opacity .8s; animation:late2 2.6s ease-in-out infinite; }
+  @keyframes late2 { 50% { opacity:.45; } }
+
+  .brillos { position:fixed; inset:0; pointer-events:none; z-index:0; }
+  .brillos i { position:absolute; font-style:normal; color:#ff5fb0; opacity:0; animation:titila 3.4s ease-in-out infinite; }
+  @keyframes titila { 0%,100% { opacity:0; transform:scale(.5) rotate(0); } 50% { opacity:.75; transform:scale(1) rotate(25deg); } }
+  @media (prefers-reduced-motion:reduce){ .brillos i { animation:none; opacity:.3; } }
+
+  #egg { position:fixed; left:50%; bottom:28px; transform:translate(-50%,40px); background:var(--acc); color:#fff; font-weight:600; padding:12px 20px; border-radius:99px; opacity:0; transition:all .4s; z-index:80; max-width:90vw; text-align:center; }
+  #egg.ver { opacity:1; transform:translate(-50%,0); }
+</style>
+</head>
+<body>
+<div class="orb a"></div><div class="orb b"></div>
+<div class="brillos" id="brillos"></div>
+
+<!-- ÍNDICE -->
+<main class="vista" id="v-hub">
+  <div class="meta mono"><span>Nº 001 / 001</span><span id="mFecha"></span></div>
+  <div style="height:6vh"></div>
+  <div class="tag mono" id="hTag"></div>
+  <h1 id="hTitulo"></h1>
+  <p id="hTexto" class="intro"></p>
+  <p class="dim" id="hNota"></p>
+  <div class="indice" id="indice"></div>
+  <p class="dim mono" id="prog"></p>
+</main>
+
+<!-- CAP 1 -->
+<main class="vista" id="v-c1">
+  <button class="volver" onclick="ir('hub')">← índice</button>
+  <div class="tag mono" id="c1tag"></div>
+  <h2 id="c1t"></h2>
+  <div id="beats"></div>
+  <button class="btn" onclick="sig('c1')">Siguiente capítulo →</button>
+</main>
+
+<!-- CAP 2 -->
+<main class="vista" id="v-c2">
+  <button class="volver" onclick="ir('hub')">← índice</button>
+  <div class="tag mono" id="c2tag"></div>
+  <h2 id="c2t"></h2>
+  <p class="dim" id="c2s"></p>
+  <div class="espejo-wrap">
+    <div class="espejo" id="espejo"><video id="cam" autoplay playsinline muted></video><div class="brillo"></div><span id="eHint">toca el espejo</span></div>
+    <p class="nota" id="camNota" style="text-align:center">Al tocar el espejo se enciende tu cámara solo para que te veas. No se graba ni se envía nada.</p>
+    <div class="elogio" id="elogio"></div>
+    <div class="cont mono" id="eCont"></div>
+  </div>
+  <button class="btn oculto" id="b2" onclick="sig('c2')">Siguiente capítulo →</button>
+</main>
+
+<!-- CAP 3 -->
+<main class="vista" id="v-c3">
+  <button class="volver" onclick="ir('hub')">← índice</button>
+  <div class="tag mono" id="c3tag"></div>
+  <h2 id="c3t"></h2>
+  <p class="dim" id="c3s"></p>
+  <div class="reloj-wrap">
+    <svg class="reloj" viewBox="0 0 200 200" aria-hidden="true">
+      <circle class="aro" cx="100" cy="100" r="94"/>
+      <g id="marcas"></g>
+      <g class="g" id="manoC" style="transform:rotate(40deg)"><line class="mano-c" x1="100" y1="100" x2="100" y2="60"/></g>
+      <g class="g" id="manoL"><line class="mano-l" x1="100" y1="100" x2="100" y2="34"/></g>
+      <circle class="eje" cx="100" cy="100" r="5"/>
+    </svg>
+    <div class="frase" id="frase"></div>
+    <input class="tiempo" id="tiempo" type="range" min="0" max="100" value="0" step="1" aria-label="Devolver el tiempo">
+    <div class="contador" id="contador"></div>
+  </div>
+  <p class="nota" id="c3n"></p>
+  <button class="btn oculto" id="b3" onclick="sig('c3')">Siguiente capítulo →</button>
+</main>
+
+<!-- CAP 4 -->
+<main class="vista" id="v-c4">
+  <button class="volver" onclick="ir('hub')">← índice</button>
+  <div class="tag mono" id="c4tag"></div>
+  <h2 id="c4t"></h2>
+  <p class="dim" id="c4s"></p>
+  <div class="holds" id="holds"></div>
+  <button class="btn oculto" id="b4" onclick="sig('c4')">Siguiente capítulo →</button>
+</main>
+
+<!-- CAP 5 -->
+<main class="vista" id="v-c5">
+  <button class="volver" onclick="ir('hub')">← índice</button>
+  <div class="tag mono" id="c5tag"></div>
+  <h2 id="c5t"></h2>
+  <p class="dim" id="c5s"></p>
+  <div class="sobres" id="sobres"></div>
+  <div class="cierre">
+    <p id="cTexto"></p>
+    <button class="btn" id="cWpp"></button>
+    <p class="nota" id="cNota"></p>
+  </div>
+</main>
+
+<div id="entrada" aria-label="Entrada">
+  <canvas id="luz"></canvas>
+  <h1 id="entNombre" aria-label=""></h1>
+  <p id="entHint" class="mono"></p>
+</div>
+
+<div id="egg"></div>
+
+<script>
+/* =================== PERSONALIZA AQUÍ ===================
+   Cambia todo por cosas REALES de ella. Entre más específico, mejor.
+   Puedes usar {ella} y {yo} en cualquier texto.
+========================================================== */
+const C = {
+  ella: "Valentina",
+  yo:   "Emanuel",
+  whatsapp: "573195212532",            // tu número con indicativo
+  mensajeBase: "Vi tu página y me quedé con una duda:",
+
+  entrada: { hint: "toca para entrar" },
+
+  hubTag:    "edición única · hecha a mano",
+  hubTitulo: "Valentina Ríos.",
+  hubTexto:  "A pesar de todo lo que ha pasado, yo, dentro de mí, siento y he sentido siempre que eres una mujer maravillosa. Lástima que pasaron inconvenientes, pero si tuviera la oportunidad de devolver el tiempo, te escogería a ti una y mil veces. Porque tú eres la única mujer de la que puedo decir que es mi debilidad.\n\nNo soy tan expresivo, ni mucho menos tan observador. Pero te hice esta página para que sientas todo lo que veo dentro de ti y todo lo que me inspiras.\n\nA pesar de todo, te lo diría una y mil veces: aunque nunca hubiera pasado nada, me encantas, Valentina Ríos.",
+  hubNota:   "Abajo hay cuatro capítulos. El último se abre cuando termines los demás.",
+  secreto:   "Eres curiosa. Eso me gusta.",
+
+  caps: [   // id, título, subtítulo
+    ["c2", "El espejo",                  "Así te veo yo"],
+    ["c3", "Si pudiera devolver el tiempo", "Desliza la manecilla hacia atrás"],
+    ["c4", "Lo que casi nadie nota",     "Mantén presionado"],
+    ["c5", "Lo que no te dije",          "Se abre al terminar"]
+  ],
+
+  /* CAP 1: frases grandes mientras baja */
+  c1: {
+    tag: "capítulo 1", titulo: "Lo primero que noté",
+    beats: [
+      "Antes de hablarte, ya me había fijado en ti.",
+      "No fue por lo obvio.",
+      "Fue cómo te mueves por ahí, como si no tuvieras que demostrarle nada a nadie.",
+      "Hay personas que llaman la atención. Tú la sostienes.",
+      "Y hay algo que pensé ese día y que todavía no te he dicho."
+    ]
+  },
+
+  /* CAP 2: espejo — cumplidos que salen uno a uno (usa <em>...</em> para resaltar) */
+  c2: {
+    tag: "capítulo 1", titulo: "El espejo", sub: "Toca el espejo, y mira cómo te veo yo.",
+    items: [
+      "Tienes una manera de entrar a un lugar que <em>hace que todo cambie un poco.</em>",
+      "Tu sonrisa no es de las que se fuerzan. Por eso <em>se nota tanto.</em>",
+      "Dices lo que piensas, y eso es <em>seguridad de la de verdad.</em>",
+      "Brillas sin esforzarte, y <em>eso no se finge.</em>",
+      "Eres más interesante de lo que tú misma crees.",
+      "No necesitas esforzarte para ser memorable. <em>Ya lo eres.</em>"
+    ],
+    fin: "Y hay más, pero no caben en un espejo."
+  },
+
+  /* CAP 3: reloj. Cada etapa: [nombre de la etapa, frase]. Usa <em>...</em> para resaltar */
+  c3: {
+    tag: "capítulo 2", titulo: "Si pudiera devolver el tiempo", sub: "Desliza hacia atrás, y mira qué haría.",
+    nota: "",
+    pista: "Desliza la manecilla hacia atrás.",
+    etapas: [
+      ["cuando todo se complicó",  "Si pudiera devolver el tiempo, <em>cuidaría mejor mis acciones.</em>"],
+      ["antes de eso",             "Si pudiera devolver el tiempo, <em>valoraría más cada momento</em> contigo."],
+      ["el principio",             "Si pudiera devolver el tiempo, de seguro <em>no lo pensaría para que fueras tú.</em>"]
+    ],
+    veces: 1000,
+    final: "Una y mil veces."
+  },
+
+  /* CAP 4: detalles que casi nadie nota (se revelan manteniendo presionado) */
+  c4: {
+    tag: "capítulo 3", titulo: "Lo que casi nadie nota", sub: "Mantén el dedo presionado sobre cada uno.",
+    items: [
+      "Cómo cambia tu cara cuando algo te interesa de verdad.",
+      "Cómo te ríes cuando algo te da risa de verdad.",
+      "Que cuando algo te importa de verdad, lo defiendes sin pensarlo.",
+      "Que eres más fuerte de lo que aparentas.",
+      "Ese humor tuyo que aparece justo cuando uno no lo espera."
+    ]
+  },
+
+  /* CAP 5: sobres cerrados (título misterioso, lo que dice dentro) */
+  c5: {
+    tag: "capítulo final", titulo: "Lo que no te dije", sub: "Esto prefiero contártelo yo.",
+    items: [
+      ["Lo que pensé la primera vez que te vi",       "Es corto, pero me da pena escribirlo. Mejor te lo cuento yo."],
+      ["Lo único que no me he atrevido a decirte",    "Hay cosas que se dicen mejor hablando."],
+      ["Lo que haría con una tarde contigo",          "Tengo un plan. No te lo voy a arruinar contándolo por aquí."]
+    ],
+    botonPreguntar: "Quiero saber",
+    cierreTexto: "Sabes que puedes contar conmigo. Si tienes dudas o más preguntas, no lo dudes y escríbeme.\n\n— {yo}",
+    botonWpp: "Escríbeme por WhatsApp",
+    mensajeWpp: "Hola, vi tu página y quiero escribirte.",
+    notaPie: "Sin presión. Cuando quieras.",
+    notaSinNumero: "(pon tu número en CONFIG.whatsapp para que el botón abra el chat contigo)"
+  }
+};
+/* ======================================================== */
+
+const $ = id => document.getElementById(id);
+const S = s => String(s).replaceAll("{ella}", C.ella).replaceAll("{yo}", C.yo);
+const wait = ms => new Promise(r => setTimeout(r, ms));
+const vib = ms => { try { navigator.vibrate && navigator.vibrate(ms); } catch(e){} };
+const ORDEN = C.caps.map(c => c[0]), LIBRES = ORDEN.slice(0, -1), FINAL = ORDEN[ORDEN.length - 1];
+const guardar = (k, v) => { try { localStorage.setItem("pe_" + k, v); } catch(e){} };
+const leer = k => { try { return localStorage.getItem("pe_" + k) || ""; } catch(e){ return ""; } };
+
+function toast(t){ const e = $("egg"); e.textContent = t; e.classList.add("ver"); clearTimeout(toast.t); toast.t = setTimeout(() => e.classList.remove("ver"), 2600); }
+
+/* ---- navegación ---- */
+const visto = new Set(), init = {};
+const desbloqueado = () => LIBRES.every(id => visto.has(id));
+function ir(id){
+  if (id === FINAL && !desbloqueado()){
+    const falta = C.caps.filter(c => LIBRES.includes(c[0]) && !visto.has(c[0])).map(c => c[1]);
+    toast("Primero lee: " + falta.join(", ")); vib(40); return;
+  }
+  location.hash = id === "hub" ? "" : id;
+}
+function sig(id){ const i = ORDEN.indexOf(id); ir(i < ORDEN.length - 1 ? ORDEN[i+1] : "hub"); }
+let avisado = false, entro = false;
+function mostrar(){
+  let id = location.hash.replace("#","") || "hub";
+  if (id === FINAL && !desbloqueado()) id = "hub";
+  const vid = id;
+  document.querySelectorAll(".vista").forEach(v => v.classList.remove("activa"));
+  const el = $("v-" + vid) || $("v-hub"); el.classList.add("activa"); scrollTo(0,0);
+  if (id !== "c2") stopCam();
+  if (id !== "hub"){ visto.add(id); init[id] && init[id](); }
+  pintarIndice();
+  if (id === "hub" && entro && desbloqueado() && !avisado){ avisado = true; setTimeout(() => { toast("Se abrió el último capítulo 🔓"); vib([40,60,40]); }, 500); }
+}
+addEventListener("hashchange", mostrar);
+
+/* ---- índice ---- */
+$("mFecha").textContent = new Date().toLocaleDateString("es-CO", { month:"long", year:"numeric" });
+$("hTag").textContent = C.hubTag; $("hTitulo").textContent = S(C.hubTitulo);
+$("hTexto").innerHTML = S(C.hubTexto).replace(/\n\n/g, "<br><br>").replace(/\n/g, "<br>");
+$("hNota").textContent = S(C.hubNota);
+function pintarIndice(){
+  const ind = $("indice"); ind.innerHTML = "";
+  C.caps.forEach(([id, t, s], i) => {
+    const bloq = id === FINAL && !desbloqueado();
+    const b = document.createElement("button");
+    b.className = "cap" + (visto.has(id) ? " visto" : "") + (bloq ? " bloq" : "") + (id === FINAL && !bloq && !visto.has(id) ? " nuevo" : "");
+    b.innerHTML = `<span class="n mono">0${i+1}</span><span class="t"><b>${S(t)}</b><span>${S(s)}</span></span><span class="ok">${bloq ? "🔒" : "✓"}</span>`;
+    b.onclick = () => { vib(10); ir(id); }; ind.appendChild(b);
+  });
+  $("prog").textContent = `${LIBRES.filter(x => visto.has(x)).length} de ${LIBRES.length} leídos` + (desbloqueado() ? " · final abierto" : "");
+}
+let toques = 0;
+$("hTitulo").onclick = () => { if (++toques === 5){ toast(S(C.secreto)); vib([30,40,30]); toques = 0; } };
+
+/* ---- scroll reveal ---- */
+function observar(root){
+  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting){ e.target.classList.add("in"); io.unobserve(e.target); } }), { threshold:.4 });
+  root.querySelectorAll(".beat:not(.in)").forEach(el => io.observe(el));
+}
+
+/* ---- CAP 1 ---- */
+init.c1 = () => {
+  $("c1tag").textContent = C.c1.tag; $("c1t").textContent = S(C.c1.titulo);
+  const b = $("beats");
+  if (!b.children.length) C.c1.beats.forEach((t, i) => {
+    const d = document.createElement("div"); d.className = "beat" + (i === C.c1.beats.length - 1 ? " fin" : ""); d.textContent = S(t); b.appendChild(d);
+  });
+  observar($("v-c1"));
+};
+
+/* ---- cámara del espejo (solo local, no se graba ni se envía) ---- */
+let stream = null, camIntentada = false;
+async function activarCamara(){
+  if (stream) return;
+  const nota = $("camNota");
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    nota.textContent = "Aquí no se puede usar la cámara: abre la página con Live Server (localhost) o desde un link https."; return;
+  }
+  try {
+    try { stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:"user" }, audio:false }); }
+    catch(e1){ if (e1 && (e1.name === "NotAllowedError" || e1.name === "SecurityError")) throw e1; stream = await navigator.mediaDevices.getUserMedia({ video:true, audio:false }); }
+    const v = $("cam"); v.muted = true; v.setAttribute("playsinline", ""); v.srcObject = stream; await v.play().catch(() => {});
+    $("espejo").classList.add("cam"); nota.textContent = "Solo tú te ves. No se graba ni se envía nada."; vib(20);
+    if (ei === 0) $("elogio").textContent = "Toca el espejo otra vez.";
+  } catch(e){
+    stream = null; const n = e && e.name;
+    nota.textContent =
+      (n === "NotAllowedError" || n === "PermissionDeniedError") ? "El permiso de la cámara está bloqueado. Toca el candado junto a la dirección, ponlo en «Permitir» y recarga la página." :
+      (n === "NotFoundError" || n === "DevicesNotFoundError")    ? "No encuentro ninguna cámara en este dispositivo." :
+      (n === "NotReadableError" || n === "TrackStartError")      ? "Otra app está usando la cámara (Zoom, Meet…). Ciérrala y toca el espejo otra vez." :
+      "No pude abrir la cámara (" + (n || "error") + "). El espejo funciona igual sin ella.";
+  }
+}
+function stopCam(){
+  camIntentada = false;
+  if (!stream) return;
+  stream.getTracks().forEach(t => t.stop()); stream = null;
+  $("cam").srcObject = null; $("espejo").classList.remove("cam");
+  $("camNota").textContent = "Al tocar el espejo se enciende tu cámara solo para que te veas. No se graba ni se envía nada.";
+}
+
+/* ---- CAP 2: espejo ---- */
+let ei = 0, ocupado = false;
+init.c2 = () => {
+  $("c2tag").textContent = C.c2.tag; $("c2t").textContent = S(C.c2.titulo); $("c2s").textContent = S(C.c2.sub);
+  if (init.c2.hecho) return; init.c2.hecho = true;
+  $("espejo").onclick = async () => {
+    if (ocupado) return; const items = C.c2.items, L = $("elogio");
+    if (!camIntentada){                       // primer toque: prende la cámara
+      camIntentada = true; ocupado = true; $("eHint").textContent = "abriendo cámara…";
+      await activarCamara(); ocupado = false;
+      if (stream) return;                     // con cámara: el siguiente toque ya muestra el primer cumplido
+    }
+    ocupado = true; vib(14); $("eHint").style.opacity = 0;
+    L.classList.add("sale"); await wait(350);
+    if (ei < items.length){ L.innerHTML = S(items[ei]); ei++; }
+    else { L.innerHTML = S(C.c2.fin); }
+    L.classList.remove("sale");
+    $("eCont").textContent = `${Math.min(ei, items.length)} / ${items.length}`;
+    if (ei >= items.length) $("b2").classList.remove("oculto");
+    ocupado = false;
+  };
+};
+
+/* ---- CAP 3: reloj ---- */
+init.c3 = () => {
+  $("c3tag").textContent = C.c3.tag; $("c3t").textContent = S(C.c3.titulo); $("c3s").textContent = S(C.c3.sub); $("c3n").textContent = S(C.c3.nota);
+  if (init.c3.hecho) return; init.c3.hecho = true;
+  const m = $("marcas");
+  for (let i = 0; i < 12; i++){
+    const a = i * 30 * Math.PI / 180, r1 = i % 3 ? 82 : 76, r2 = 88;
+    const l = document.createElementNS("http://www.w3.org/2000/svg", "line"); l.setAttribute("class", "marca");
+    l.setAttribute("x1", 100 + r1 * Math.sin(a)); l.setAttribute("y1", 100 - r1 * Math.cos(a));
+    l.setAttribute("x2", 100 + r2 * Math.sin(a)); l.setAttribute("y2", 100 - r2 * Math.cos(a)); m.appendChild(l);
+  }
+  const R = $("tiempo"), F = $("frase"), N = $("contador"), et = C.c3.etapas;
+  let actual = -1, cambiando = false, terminado = false;
+  const pintar = async i => {
+    if (i === actual) return; actual = i; cambiando = true; F.classList.add("sale"); await wait(260);
+    F.innerHTML = i < 0 ? S(C.c3.pista) : S(et[i][1]); F.classList.remove("sale"); cambiando = false;
+  };
+  const etapaDe = v => v < 5 ? -1 : Math.min(et.length - 1, Math.floor((v - 5) / (95 / et.length)));
+  const girar = v => { $("manoL").style.transform = "rotate(" + (-v * 7.2) + "deg)"; $("manoC").style.transform = "rotate(" + (40 - v * 0.6) + "deg)"; };
+  const contar = async () => {
+    terminado = true; vib([30,40,30]); R.disabled = true; const T = C.c3.veces, dur = 2200, t0 = performance.now();
+    await new Promise(res => { const p = now => { const k = Math.min((now - t0) / dur, 1); N.textContent = "×" + Math.round(1 + (T - 1) * (k * k)); k < 1 ? requestAnimationFrame(p) : res(); }; requestAnimationFrame(p); });
+    N.textContent = "×" + T + " · " + S(C.c3.final); vib(25); $("b3").classList.remove("oculto");
+  };
+  R.oninput = () => { if (terminado) return; const v = +R.value; girar(v); pintar(etapaDe(v)); if (v >= 98) { R.value = 100; girar(100); contar(); } };
+  pintar(-1); girar(0);
+};
+
+/* ---- CAP 4: mantener presionado ---- */
+let abiertos = 0;
+init.c4 = () => {
+  $("c4tag").textContent = C.c4.tag; $("c4t").textContent = S(C.c4.titulo); $("c4s").textContent = S(C.c4.sub);
+  const h = $("holds"); if (h.children.length) return;
+  C.c4.items.forEach(t => {
+    const d = document.createElement("div"); d.className = "hold";
+    d.innerHTML = `<div class="tx">${S(t)}</div><div class="lbl mono">mantén presionado</div><div class="bar"></div>`; h.appendChild(d);
+    const bar = d.querySelector(".bar"); let t0 = 0, raf = 0, listo = false; const DUR = 850;
+    const paso = now => {
+      const p = Math.min((now - t0) / DUR, 1); bar.style.width = (p * 100) + "%";
+      if (p >= 1){
+        listo = true; d.classList.add("abierto"); vib([30,40,30]); abiertos++;
+        if (abiertos >= C.c4.items.length) $("b4").classList.remove("oculto"); return;
+      }
+      raf = requestAnimationFrame(paso);
+    };
+    const ini = e => { if (listo) return; e.preventDefault(); t0 = performance.now(); raf = requestAnimationFrame(paso); };
+    const fin = () => { if (listo) return; cancelAnimationFrame(raf); bar.style.width = "0"; };
+    d.addEventListener("pointerdown", ini);
+    ["pointerup","pointerleave","pointercancel"].forEach(ev => d.addEventListener(ev, fin));
+    d.addEventListener("contextmenu", e => e.preventDefault());
+  });
+};
+
+/* ---- CAP 5: sobres ---- */
+init.c5 = () => {
+  $("c5tag").textContent = C.c5.tag; $("c5t").textContent = S(C.c5.titulo); $("c5s").textContent = S(C.c5.sub);
+  $("cTexto").innerHTML = S(C.c5.cierreTexto).replace(/\n/g, "<br>"); $("cNota").textContent = C.c5.notaPie;
+  $("cWpp").textContent = C.c5.botonWpp;
+  $("cWpp").onclick = () => { if (C.whatsapp) location.href = "https://wa.me/" + C.whatsapp + "?text=" + encodeURIComponent(C.c5.mensajeWpp); else toast(C.c5.notaSinNumero); };
+  const s = $("sobres"); if (s.children.length) return;
+  C.c5.items.forEach(([t, cuerpo]) => {
+    const d = document.createElement("div"); d.className = "sobre";
+    d.innerHTML = `<button><span class="ic">✉️</span><span class="tt">${S(t)}</span></button>
+      <div class="cuerpo"><p>${S(cuerpo)}</p><button class="btn">${C.c5.botonPreguntar}</button></div>`;
+    d.querySelector(":scope > button").onclick = () => { d.classList.toggle("ab"); d.querySelector(".ic").textContent = d.classList.contains("ab") ? "📖" : "✉️"; vib(12); };
+    d.querySelector(".cuerpo .btn").onclick = () => {
+      if (C.whatsapp) location.href = "https://wa.me/" + C.whatsapp + "?text=" + encodeURIComponent(C.mensajeBase + " " + S(t));
+      else toast(C.c5.notaSinNumero);
+    };
+    s.appendChild(d);
+  });
+};
+
+/* ---- brillos de fondo ---- */
+(function(){ const b = $("brillos"); for (let i = 0; i < 16; i++){ const e = document.createElement("i"); e.textContent = i % 5 === 0 ? "🎀" : (i % 2 ? "✦" : "✧");
+  e.style.left = (Math.random() * 96) + "%"; e.style.top = (Math.random() * 96) + "%"; e.style.fontSize = (10 + Math.random() * 16) + "px";
+  e.style.animationDelay = (Math.random() * 3.4) + "s"; e.style.animationDuration = (2.6 + Math.random() * 2.4) + "s"; b.appendChild(e); } })();
+
+/* ---- entrada: nombre brillante, toca para entrar ---- */
+(function(){
+  const E = $("entrada"), cv = $("luz"), cx = cv.getContext("2d"), N = $("entNombre");
+  $("entHint").textContent = C.entrada.hint; N.setAttribute("aria-label", S(C.ella));
+  const L = [...S(C.ella)].map(ch => { const sp = document.createElement("span"); sp.textContent = ch; N.appendChild(sp); return sp; });
+  let W = 0, H = 0, dpr = Math.min(devicePixelRatio || 1, 2), P = [];
+  const medir = () => { W = innerWidth; H = innerHeight; cv.width = W * dpr; cv.height = H * dpr; cx.setTransform(dpr,0,0,dpr,0,0); };
+  medir(); addEventListener("resize", medir);
+  for (let i = 0; i < 70; i++) P.push({ x: Math.random(), y: Math.random(), vx: (Math.random() - .5) * .012, vy: -.004 - Math.random() * .012, r: .8 + Math.random() * 1.8, f: Math.random() * 6 });
+  let tx = W * .5, ty = H * .5, x = tx, y = ty, R = 190, mov = false, fin = false, t0 = performance.now(), last = t0;
+  const mover = e => { if (fin) return; tx = e.clientX; ty = e.clientY; mov = true; };
+  E.addEventListener("pointermove", mover); E.addEventListener("pointerdown", mover);
+  async function terminar(){
+    fin = true; vib([30,50,80]); $("entHint").style.opacity = 0; tx = W / 2; ty = H * .5;
+    const a = performance.now(), R0 = R;
+    await new Promise(res => { const p = now => { const k = Math.min((now - a) / 1300, 1), e = 1 - Math.pow(1 - k, 3); R = R0 + (Math.max(W, H) * 1.1 - R0) * e; k < 1 ? requestAnimationFrame(p) : res(); }; requestAnimationFrame(p); });
+    entro = true; location.hash = ""; mostrar();
+    E.classList.add("abre"); await wait(1500); E.classList.add("fuera");
+  }
+  E.addEventListener("click", () => { if (!fin) terminar(); });
+  function frame(now){
+    const dt = Math.min((now - last) / 1000, .05); last = now;
+    if (!mov && !fin){ const t = (now - t0) / 1000; tx = W * (.5 + .2 * Math.sin(t * .6)); ty = H * (.5 + .12 * Math.sin(t * .9)); }
+    x += (tx - x) * Math.min(dt * 6, 1); y += (ty - y) * Math.min(dt * 6, 1);
+    E.style.setProperty("--x", x + "px"); E.style.setProperty("--y", y + "px"); E.style.setProperty("--r", R + "px");
+    for (const el of L){
+      const b = el.getBoundingClientRect(), d = Math.hypot(b.left + b.width / 2 - x, b.top + b.height / 2 - y);
+      el.style.opacity = (fin ? 1 : .5 + .5 * Math.max(0, 1 - d / 180)).toFixed(3);
+    }
+    cx.clearRect(0, 0, W, H);
+    for (const p of P){
+      p.x += p.vx * dt * 6; p.y += p.vy * dt * 6; p.f += dt;
+      if (p.y < -.02){ p.y = 1.02; p.x = Math.random(); } if (p.x < -.02) p.x = 1.02; if (p.x > 1.02) p.x = -.02;
+      const px = p.x * W, py = p.y * H, near = Math.max(0, 1 - Math.hypot(px - x, py - y) / Math.max(R * 1.4, 1));
+      const a = (.05 + .8 * near) * (.7 + .3 * Math.sin(p.f * 2));
+      cx.fillStyle = `rgba(255,255,255,${Math.min(a, 1).toFixed(3)})`;
+      if (p.r > 1.7){ cx.font = (p.r * 7) + "px serif"; cx.textAlign = "center"; cx.textBaseline = "middle"; cx.fillText("✦", px, py); }
+      else { cx.beginPath(); cx.arc(px, py, p.r, 0, 6.283); cx.fill(); }
+    }
+    if (!E.classList.contains("fuera")) requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+
+pintarIndice(); mostrar();
+</script>
+</body>
+</html>
